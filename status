@@ -12,92 +12,106 @@ pingspafile=/home/${current_username}/ocn_automation/pingspa
 pingdnsfile=/home/${current_username}/ocn_automation/pingdns
 internetconnectionfile=/home/${current_username}/ocn_automation/internetconnectionstatus
 resulterrorfile=/home/${current_username}/ocn_automation/resulterror
+finalresultfile=/home/${current_username}/ocn_automation/finalresult
+
+#check if the user is logged In
+    loginstatus=$(exium-cli status | grep -i Permission  | cut -d "." -f 2 | sed 's/ //g')
+    if [[ $loginstatus == "UsernotLoggedin" ]]; then
+        echo 'User not Logged in. Please login using "exium-cli login -w <workspace> -u <username>"'
+        echo "Please try again after loggin In...Bye"
+        echo " $(whoami) - $(date) - Script Execution Failed - User not Logged in. Please login using exium-cli login -w <workspace> -u <username>" > $resulterrorfile
+        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+        echo "-Result Error Message Sent..."
+        exit
+    fi
 
 #exium_error fucntion is called to check the exium-client availability
 exium_error ()
 {
+    
     exiumerror=$(exium-cli status | grep -e Connecting -e Active -e NotActive -e Disconnecting -e Fatal | cut -d ":" -f 2 | sed 's/ //g')
 
-                if [ $exiumerror == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
+    if [ $exiumerror == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
+    then
+    errorflag=1
+    elif [ -z "$exiumerror" ]
+    then
+    errorflag=2
+    else
+    #NotActive flag
+    errorflag=0
+    fi
+
+
+    if [ $errorflag -eq 1 ]
+    then 
+        echo "Fatal error : listen udp4 :9384: bind: address already in use"
+        echo "Restarting Exium-Client-Service - Please wait for 30 Seconds"
+        sudo killall -s SIGKILL exium-cli
+        if [ $? -eq 0 ]
                 then
-                errorflag=1
-                elif [ -z "$exiumerror" ]
-                then
-                errorflag=2
-                else
-                #NotActive flag
-                errorflag=0
-                fi
-
-
-                if [ $errorflag -eq 1 ]
-                then 
-                echo "Fatal error : listen udp4 :9384: bind: address already in use"
-                echo "Restarting Exium-Client-Service - Please wait for 30 Seconds"
-                sudo killall -s SIGKILL exium-cli
-                if [ $? -eq 0 ]
-                        then
-                            echo "Exium.Client-Service Successfully Restarted"
-                            sleep 30
-                        elif [ $? -eq 1 ]
-                        then
-                            echo "No Process Found - OK"
-                        else
-                            echo "Exium-Client Restart Failed"
-                            echo "Aborting Script Execution - Please try to reset client manually"
-                            echo "-------------------- Script Terminated --------------------"
-                            echo " $(whoami) - $(date) - Script Execution Failed - Fatal error udp4 :9384 - Exium.Client.service restart failed - manual restart required:exclamation:" > $resulterrorfile
-                            ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
-                            echo "-Result Error Message Sent..."
-                            exit
-                fi
-                 
-                fi
-
-                if [ $errorflag -eq 2 ]; then
-                echo "Fatal error : service not running"
-                echo "Trying to restart the exium-client - Please wait 30 Seconds"
-                sudo service exium-client restart
-                    if [ $? -eq 0 ]
-                        then
-                            echo "Exium.Client Successfully Restarted"
-                            sleep 30
-                        else
-                            echo "Service exium-client restart - Failed"
-                            echo "Trying to restart exium-client - systemctl"
-                            sudo systemctl restart exium-client.service
-                             if [ $? -eq 0 ]
-                             then
-                                 echo "systemctl restart exium-client.service - Success"
-                                 sleep 30
-                             else
-                                 echo "systemctl restart exium-client.service - Failed"
-                                 echo "Aborting Script Execution - Please try to reset client manually"
-                                 echo "-------------------- Script Terminated --------------------"
-                                 echo " $(whoami) - $(date) - Script Execution Failed - Fatal error : service not running - Exium.Client restart failed - manual restart required:exclamation:" > $resulterrorfile
-                                 ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
-                                 echo "-Result Error Message Sent..."
-                                 exit
-                             fi
-                    fi
-                  
-                fi
-
-                if [ $errorflag -eq 0 ]
-                then
-                    pid=$(pidof exium-cli)
-                    if [ -n "$pid" ];
-                    then
-                    echo "Found running jobs for exium-cli - PID : $pid"
-                    sudo killall -s SIGKILL exium-cli
-                    echo "Waiting for $pid to DIE :)"
-                    sleep 10
-                    echo "$pid died - RIP :( - please wait 30 seconds"
+                    echo "Exium.Client-Service Successfully Restarted"
                     sleep 30
-                    exium-cli disconnect
-                    fi
-                fi                
+                elif [ $? -eq 1 ]
+                then
+                    echo "No Process Found - OK"
+                else
+                    echo "Exium-Client Restart Failed"
+                    echo "Aborting Script Execution - Please try to reset client manually"
+                    echo "-------------------- Script Terminated --------------------"
+                    echo " $(whoami) - $(date) - Script Execution Failed - Fatal error udp4 :9384 - Exium.Client.service restart failed - manual restart required:exclamation:" > $resulterrorfile
+                    ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+                    echo "-Result Error Message Sent..."
+                    exit
+        fi
+    fi
+
+                
+    if [ $errorflag -eq 2 ]; then
+    echo "Fatal error : service not running"
+    echo "Trying to restart the exium-client - Please wait 30 Seconds"
+    sudo service exium-client restart
+        if [ $? -eq 0 ]
+            then
+                echo "Exium.Client Successfully Restarted"
+                sleep 30
+            else
+                echo "Service exium-client restart - Failed"
+                echo "Trying to restart exium-client - systemctl"
+                sudo systemctl restart exium-client.service
+                 if [ $? -eq 0 ]
+                 then
+                     echo "systemctl restart exium-client.service - Success"
+                     sleep 30
+                 else
+                     echo "systemctl restart exium-client.service - Failed"
+                     echo "Aborting Script Execution - Please try to reset client manually"
+                     echo "-------------------- Script Terminated --------------------"
+                     echo " $(whoami) - $(date) - Script Execution Failed - Fatal error : service not running - Exium.Client restart failed - manual restart required:exclamation:" > $resulterrorfile
+                     ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+                     echo "-Result Error Message Sent..."
+                     exit
+                 fi
+        fi
+      
+    fi
+
+    if [ $errorflag -eq 0 ]
+    then
+        pid=$(pidof exium-cli)
+        if [ -n "$pid" ];
+        then
+        echo "Found running jobs for exium-cli - PID : $pid"
+        sudo killall -s SIGKILL exium-cli
+        echo "Waiting for $pid to DIE :)"
+        sleep 10
+        echo "$pid died - RIP :( - please wait 30 seconds"
+        sleep 30
+        exium-cli disconnect
+        fi
+    fi                
 }
+
 
 exium_error
 exium_error
@@ -489,6 +503,8 @@ echo "SPA - [10.0.0.5] Ping Results" >> $slackrawspafile
 echo >> $slackrawspafile
 echo "DNS - [100.100.100.100] Ping Results" >> $slackrawdnsfile
 echo >> $slackrawdnsfile
+echo "Internet - [www.google.com] Results" >> $internetconnectionfile
+echo >> $internetconnectionfile
 echo "---------- $(whoami) - $(date) ----------" >> $rawconnectionstatusfile
 echo >> $rawconnectionstatusfile
 serverfile=/home/${current_username}/ocn_automation/servers
@@ -577,18 +593,12 @@ if [ $result_count -ge 3 ]
         echo "Total Cyber-Node Listed : $servercount" >> $rawconnectionstatusfile
         #report generation starts from here
         #success messages 
-        #sending results of the automation script using bot to slack channel exedge-monitoring-results
-        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/rawconnectionstatus`"
-        echo "+Connection Status Results Sent..."
-        sleep 1
-        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/slackrawdns`"
-        echo "+DNS Results Sent..."
-        sleep 1
-        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/internetconnectionstatus`"
-        echo "+Internet Connection Results Sent..."
-        sleep 1
-        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/slackrawspa`"
-        echo "+SPA Results Sent..."
+        echo >> $rawconnectionstatusfile
+        echo >> $slackrawdnsfile
+        echo >> $slackrawspafile
+        echo >> $internetconnectionfile
+        cat $rawconnectionstatusfile $slackrawdns $slackrawspa $internetconnectionfile > $finalresultfile
+        python3 /home/${current_username}/OCN-Status-Automation/send_finalresult.py
         exit
 else
     #sending error message slack channel exedge-monitoring-results
@@ -597,3 +607,4 @@ else
     echo "-Result Error Message Sent..."
     exit
 fi
+
