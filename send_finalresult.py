@@ -23,7 +23,7 @@ channel_name = "exedge-monitoring-results"
 client = WebClient(token=slack_token)
 
 # Format the output as a code block with a headline
-output = f"*Cyber-Node Status Report*\n\n```\n{file_content}\n```"
+output = f"*Cyber-Node Status Report*\n\n{file_content}\n"
 
 # Send the formatted output to the Slack channel
 try:
