@@ -597,7 +597,7 @@ if [ $result_count -ge 3 ]
         echo >> $slackrawdnsfile
         echo >> $slackrawspafile
         echo >> $internetconnectionfile
-        cat $rawconnectionstatusfile $slackrawdns $slackrawspa $internetconnectionfile > $finalresultfile
+        cat $rawconnectionstatusfile $slackrawdnsfile $slackrawspafile $internetconnectionfile > $finalresultfile
         python3 /home/${current_username}/OCN-Status-Automation/send_finalresult.py
         exit
 else
