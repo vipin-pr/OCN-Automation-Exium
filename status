@@ -20,7 +20,7 @@ finalresultfile=/home/${current_username}/ocn_automation/finalresult
         echo 'User not Logged in. Please login using "exium-cli login -w <workspace> -u <username>"'
         echo "Please try again after loggin In...Bye"
         echo " $(whoami) - $(date) - Script Execution Failed - User not Logged in. Please login using exium-cli login -w <workspace> -u <username>" > $resulterrorfile
-        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+        python3 /home/${current_username}/OCN-Status-Automation/slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
         echo "-Result Error Message Sent..."
         exit
     fi
@@ -60,7 +60,7 @@ exium_error ()
                     echo "Aborting Script Execution - Please try to reset client manually"
                     echo "-------------------- Script Terminated --------------------"
                     echo " $(whoami) - $(date) - Script Execution Failed - Fatal error udp4 :9384 - Exium.Client.service restart failed - manual restart required:exclamation:" > $resulterrorfile
-                    ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+                    python3 /home/${current_username}/OCN-Status-Automation/slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
                     echo "-Result Error Message Sent..."
                     exit
         fi
@@ -88,7 +88,7 @@ exium_error ()
                      echo "Aborting Script Execution - Please try to reset client manually"
                      echo "-------------------- Script Terminated --------------------"
                      echo " $(whoami) - $(date) - Script Execution Failed - Fatal error : service not running - Exium.Client restart failed - manual restart required:exclamation:" > $resulterrorfile
-                     ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+                     python3 /home/${current_username}/OCN-Status-Automation/slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
                      echo "-Result Error Message Sent..."
                      exit
                  fi
@@ -154,7 +154,7 @@ client_restart ()
             echo "Aborting Script Execution - Please try to reset client manually" | tee -a $detailedlogfile
             echo "-------------------- Script Terminated --------------------" | tee -a $detailedlogfile
             echo " $(whoami) - $(date) - Script Execution Failed - Fatal error : service not running - Exium.Client restart failed - manual restart required:exclamation:" > $resulterrorfile
-            ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+            python3 /home/${current_username}/OCN-Status-Automation/slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
             echo "-Result Error Message Sent..."
             exit
         fi
@@ -180,7 +180,7 @@ exium_cli_killer ()
         echo "-------------------- Script Terminated --------------------" | tee -a $detailedlogfile
         echo "Script Execution Failed - Fatal error udp4 :9384 - Exium.Client.service restart failed [10 Failures] - manual restart required" | tee -a $detailedlogfile
         echo " $(whoami) - $(date) - Script Execution Failed - Fatal error udp4 :9384 - Exium.Client.service restart failed [10 Failures] - manual restart required:exclamation:" > $resulterrorfile
-        ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+        python3 /home/${current_username}/OCN-Status-Automation/slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
         echo "-Result Error Message Sent..."
         exit
     fi        
@@ -603,7 +603,7 @@ if [ $result_count -ge 3 ]
 else
     #sending error message slack channel exedge-monitoring-results
     echo " $(whoami) - $(date) - Script Execution Failed:exclamation:" >> $resulterrorfile
-    ./slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
+    python3 /home/${current_username}/OCN-Status-Automation/slackbot -c exedge-monitoring-results -m "`cat /home/${current_username}/ocn_automation/resulterror`"
     echo "-Result Error Message Sent..."
     exit
 fi
