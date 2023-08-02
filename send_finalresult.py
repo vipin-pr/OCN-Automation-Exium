@@ -14,7 +14,7 @@ with open(file_path, 'r') as file:
     file_content = file.read()
 
 # Specify your Slack token
-slack_token = "API_TOKEN"
+slack_token = "API-TOKEN-HERE"
 
 # Specify the Slack channel name
 channel_name = "exedge-monitoring-results"
@@ -31,6 +31,6 @@ try:
         channel=channel_name,
         text=output
     )
-    print("Message sent successfully!")
+    print("CN Status Report Sent successfully!")
 except SlackApiError as e:
     print(f"Error sending message to Slack: {e.response['error']}")
