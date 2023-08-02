@@ -7,7 +7,7 @@ Actions Performed -
 2) Pings DNS - 100.100.100.100
 3) Pings SPA - 10.0.0.5
 4) gathers all the results
-5) pushes into #exedge-monitoring-results channel in slack [Exium workspace]
+5) pushes into #exedge-monitoring-results channel in slack channel [workspace]
                     
 Note : The script utilizes linux client for connecting and checking the status of OCN
        If any of the OCN is down pls double check using the windows or linux client
