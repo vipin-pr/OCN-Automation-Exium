@@ -1,0 +1,26 @@
+#!/bin/bash
+username=$(whoami)
+if [ $# -eq 0 ]; then
+    echo
+    echo "Cyber-Node IP Address Expected..."
+    echo
+else
+    connectionstatus=$(exium-cli status | grep Active | cut -d ":" -f 2 | sed 's/ //g')
+    if [ $connectionstatus = 'Active' ];
+    then
+    exium-cli disconnect
+    sleep 5
+    fi
+exium-cli connect -s $1
+sleep 5
+connectionstatus=$(exium-cli status | grep Active | cut -d ":" -f 2 | sed 's/ //g')
+    if [ $connectionstatus = 'Active' ];
+    then
+    sh /home/$username/OCN-Status-Automation/ping.sh
+    exium-cli disconnect
+    else
+    echo
+    echo "Connection Failed - $1"
+    echo
+    fi
+fi
