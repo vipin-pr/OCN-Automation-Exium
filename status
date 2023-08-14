@@ -14,6 +14,19 @@ internetconnectionfile=/home/${current_username}/ocn_automation/internetconnecti
 resulterrorfile=/home/${current_username}/ocn_automation/resulterror
 finalresultfile=/home/${current_username}/ocn_automation/finalresult
 
+#Timer-function
+
+timer() {
+  local seconds="$1"
+  
+  while [ "$seconds" -gt 0 ]; do
+    printf "Remaining seconds: %02d\r" "$seconds"
+    sleep 1
+    ((seconds--))
+  done
+
+}
+
 #check if the user is logged In
     loginstatus=$(exium-cli status | grep -i Permission  | cut -d "." -f 2 | sed 's/ //g')
     if [[ $loginstatus == "UsernotLoggedin" ]]; then
@@ -51,7 +64,7 @@ exium_error ()
         if [ $? -eq 0 ]
                 then
                     echo "Exium.Client-Service Successfully Restarted"
-                    sleep 30
+                    timer 30
                 elif [ $? -eq 1 ]
                 then
                     echo "No Process Found - OK"
@@ -74,7 +87,7 @@ exium_error ()
         if [ $? -eq 0 ]
             then
                 echo "Exium.Client Successfully Restarted"
-                sleep 30
+                timer 30
             else
                 echo "Service exium-client restart - Failed"
                 echo "Trying to restart exium-client - systemctl"
@@ -82,7 +95,7 @@ exium_error ()
                  if [ $? -eq 0 ]
                  then
                      echo "systemctl restart exium-client.service - Success"
-                     sleep 30
+                     timer 30
                  else
                      echo "systemctl restart exium-client.service - Failed"
                      echo "Aborting Script Execution - Please try to reset client manually"
@@ -103,10 +116,10 @@ exium_error ()
         then
         echo "Found running jobs for exium-cli - PID : $pid"
         sudo killall -s SIGKILL exium-cli
-        echo "Waiting for $pid to DIE :)"
-        sleep 10
+        echo "Waiting for $pid to DIE :) - please wait 10 seconds"
+        timer 10
         echo "$pid died - RIP :( - please wait 30 seconds"
-        sleep 30
+        timer 30
         exium-cli disconnect
         fi
     fi                
@@ -140,7 +153,7 @@ client_restart ()
     then
         echo "service exium-client restart - Success " | tee -a $detailedlogfile
         echo >> $detailedlogfile
-        sleep 30
+        timer 30
     else
         echo "Service exium-client restart - Failed" | tee -a $detailedlogfile
         echo "Trying to restart exium-client - systemctl" | tee -a $detailedlogfile
@@ -148,7 +161,7 @@ client_restart ()
         if [ $? -eq 0 ]
         then
             echo "systemctl restart exium-client.service - Success" | tee -a $detailedlogfile
-            sleep 30
+            timer 30
         else
             echo "systemctl restart exium-client.service - Failed" | tee -a $detailedlogfile
             echo "Aborting Script Execution - Please try to reset client manually" | tee -a $detailedlogfile
@@ -170,7 +183,7 @@ exium_cli_killer ()
     then
         echo "Exium.Client-Service Successfully Restarted" | tee -a $detailedlogfile
         echo >> $detailedlogfile
-        sleep 30
+        timer 30
     elif [ $? -eq 1 ]
     then
         echo "No Process Found - OK"
