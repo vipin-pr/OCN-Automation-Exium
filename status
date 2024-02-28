@@ -1,7 +1,9 @@
 #!/bin/bash
-# To continue with the tests we must logged into the exium-client using the workspace name and username
+# To continue with the tests we must login to exium-client using the workspace name and username
 i=1
 current_username=$(whoami)
+
+#creating neccessary folders used for logging and storing results.
 mkdir -p /home/${current_username}/ocn_automation
 rm -f -R /home/${current_username}/ocn_automation/*
 slackrawdnsfile=/home/${current_username}/ocn_automation/slackrawdns
@@ -14,8 +16,7 @@ internetconnectionfile=/home/${current_username}/ocn_automation/internetconnecti
 resulterrorfile=/home/${current_username}/ocn_automation/resulterror
 finalresultfile=/home/${current_username}/ocn_automation/finalresult
 
-#Timer-function
-
+#Timer-function 
 timer() {
   local seconds="$1"
   
