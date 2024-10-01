@@ -1,18 +1,13 @@
 # OCN-Status-Automation
-This script automates the testing of each and every xE(exedge) available in the exium-cli(xClient) application available for linux
-The script will try to connect to each OCN and does various testing required for checking the status of the exedges.
+This repository provides an automation solution developed for network testing and monitoring of Exium’s xEdges using Linux-based CLI tools. The scripts automate connecting to each OCN (On-premises Cloud Network), running connectivity checks, and sending detailed results to a designated Slack channel.
 
-Actions Performed -
-1) Try to connect to exedge
-2) Pings DNS - 100.100.100.100
-3) Pings SPA - 10.0.0.5
-4) gathers all the results
-5) pushes into #exedge-monitoring-results channel in slack channel [workspace]
-                    
-Note : The script utilizes linux client for connecting and checking the status of OCN
-       If any of the OCN is down pls double check using the windows or linux client
-       Because sometimes the linux client will fail to connect to the exedge but the windows client will not experience any failures
-       Inclueds some other useful scripts for checking the CyberNode status quickly
+Key Features
+Connectivity Testing: Automatically connects to each xEdge to verify connectivity.
+Endpoint Monitoring: Pings DNS and SPA endpoints to ensure service health.
+Slack Integration: Shares results in real-time to a Slack channel.
+Scalability: Supports testing for multiple xEdges and endpoints.
+Usage
+This tool is ideal for network engineers or system administrators seeking an automated solution for monitoring Exium’s xEdge connections and status, reducing manual effort and enabling rapid diagnostics.
        
 @author : vipin.pr       
 
