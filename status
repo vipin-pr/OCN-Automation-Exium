@@ -47,17 +47,21 @@ exium_error ()
 
     if [ $exiumerror == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
     then
-    errorflag=1
+    errorflag=address_already_in_use
+    #errorflag=1
     elif [ -z "$exiumerror" ]
     then
-    errorflag=2
+    errorflag=exium_error_empty
+    #errorflag=2
     else
     #NotActive flag
-    errorflag=0
+    errorflag=not_active
+    #errorflag=0
     fi
 
 
-    if [ $errorflag -eq 1 ]
+    #if [ $errorflag -eq 1 ]
+    if [ "$errorflag" = "address_already_in_use" ]
     then 
         echo "Fatal error : listen udp4 :9384: bind: address already in use"
         echo "Restarting Exium-Client-Service - Please wait for 30 Seconds"
@@ -81,7 +85,7 @@ exium_error ()
     fi
 
                 
-    if [ $errorflag -eq 2 ]; then
+    if [ "$errorflag" = "exium_error_empty" ]; then
     echo "Fatal error : service not running"
     echo "Trying to restart the exium-client - Please wait 30 Seconds"
     sudo service exium-client restart
@@ -110,7 +114,7 @@ exium_error ()
       
     fi
 
-    if [ $errorflag -eq 0 ]
+    if [ "$errorflag" = "not_active" ]
     then
         pid=$(pidof exium-cli)
         if [ -n "$pid" ];
@@ -210,103 +214,117 @@ disconnectingcount=0
     connectionstatusocn=$(exium-cli status | grep -e Connecting -e Active -e NotActive -e Disconnecting -e Fatal | cut -d ":" -f 2 | sed 's/ //g')
     if [ $connectionstatusocn == 'Active' ]
     then
-    connectionflagocn=1
+    #connectionflagocn=1
+    connectionflagocn=active
     elif [ $connectionstatusocn == 'Connecting' ]
     then
-    connectionflagocn=2
+    #connectionflagocn=2
+    connectionflagocn=connecting
     elif [ $connectionstatusocn == 'Disconnecting' ]
     then
-    connectionflagocn=3
+    #connectionflagocn=3
+    connectionflagocn=disconnecting
     elif [ $connectionstatusocn == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
     then
-    connectionflagocn=4
+    #connectionflagocn=4
+    connectionflagocn=address_already_in_use
     elif [ -z "$connectionstatusocn" ]
     then
-    connectionflagocn=5
+    #connectionflagocn=5
+    connectionflagocn=connectionstatusocn_empty
     else
     #NotActive flag
-    connectionflagocn=0
+    #connectionflagocn=0
+    connectionflagocn=not_active
     fi
-    if [ $connectionflagocn -eq 2 ] || [ $connectionflagocn -eq 3 ] || [ $connectionflagocn -eq 4 ] || [ $connectionflagocn -eq 5 ]  || [ $connectionflagocn -eq 0 ]
+
+    if [ "$connectionflagocn" = "connecting" ] || [ "$connectionflagocn" = "disconnecting" ] || [ "$connectionflagocn" = "address_already_in_use" ] || [ "$connectionflagocn" = "connectionstatusocn_empty" ]  || [ "$connectionflagocn" = "not_active" ]
         then 
-            while [ $connectionflagocn -eq 2 ] || [ $connectionflagocn -eq 3 ] || [ $connectionflagocn -eq 4 ] || [ $connectionflagocn -eq 5 ]  || [ $connectionflagocn -eq 0 ]
+            while [ "$connectionflagocn" -eq "connecting" ] || [ "$connectionflagocn" -eq "disconnecting" ] || [ "$connectionflagocn" -eq "address_already_in_use" ] || [ "$connectionflagocn" -eq "connectionstatusocn_empty" ]  || [ "$connectionflagocn" -eq "not_active" ]
                 do
                 sleep 5
                 connectionstatusocn=$(exium-cli status | grep -e Connecting -e Active -e NotActive -e Disconnecting -e Fatal | cut -d ":" -f 2 | sed 's/ //g')
 
                 if [ $connectionstatusocn == 'Active' ]
                 then
-                connectionflagocn=1
+                connectionflagocn=active
+                #connectionflagocn=1
                 elif [ $connectionstatusocn == 'Connecting' ]
                 then
-                connectionflagocn=2
+                connectionflagocn=connecting
+                #connectionflagocn=2
                 connectingcount=$((connectingcount+1))
                 elif [ $connectionstatusocn == 'Disconnecting' ]
                 then
                 disconnectingcount=$((disconnectingcount+1))
-                connectionflagocn=3
+                connectionflagocn=disconnecting
+                #connectionflagocn=3
                 elif [ $connectionstatusocn == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
                 then
-                connectionflagocn=4
+                #connectionflagocn=4
+                connectionflagocn=address_already_in_use
                 fatalerrorcount=$((fatalerrorcount+1))
                 elif [ -z "$connectionstatusocn" ]
                 then
-                connectionflagocn=5
+                #connectionflagocn=5
+                connectionflagocn=connectionstatusocn_empty
                 else
                 #NotActive flag
-                connectionflagocn=0
+                #connectionflagocn=0
+                connectionflagocn=not_active
                 fi
                 
-               if [ $connectionflagocn -eq 0 ]
+                #if [ $connectionflagocn -eq 0 ]
+                if [ "$connectionflagocn" = "not_active" ]
                 then
                     pid=$(pidof exium-cli)
                     if [ -n "$pid" ];
                     then
                         exium_cli_killer
                     else
-                        connectionflagocn=1
+                        connectionflagocn=active
                     fi
                 fi
 
-                 if [ $connectionflagocn -eq 2 ]
-                 then
-                    echo "Still in connecting phase....." | tee -a $detailedlogfile
-                    if [ $connectingcount -ge 20 ]
-                    then
-                    echo "Client is looping in connecting phase" | tee -a $detailedlogfile
-                    exium_cli_killer
-                    client_restart
-                    fi
-                    sleep 3
-                 fi
-
-                 if [ $connectionflagocn -eq 3 ]
-                 then 
-                    echo "Still in Disconnecting phase....." | tee -a $detailedlogfile
-
-                    if [ $disconnectingcount -ge 20 ]
-                    then
-                    echo "Client is looping in Disconnecting phase" | tee -a $detailedlogfile
-                    exium_cli_killer
-                    client_restart
-                    fi
-                    sleep 3
-                 fi
-
-                 if [ $connectionflagocn -eq 4 ]
-                 then 
-                    echo "Fatal error : listen udp4 :9384: bind: address already in use" | tee -a $detailedlogfile
-                    if [ $fatalerrorcount -ge 2 ]
-                    then
-                        exium_cli_killer
-                    fi
-                    sleep 3
-                 fi
-
-                 if [ $connectionflagocn -eq 5 ]
-                    then
-                    echo "Fatal error : service not running" | tee -a $detailedlogfile
-                    client_restart
+                #if [ $connectionflagocn -eq 2 ]
+                if [ "$connectionflagocn" = "connecting" ]
+                then
+                   echo "Still in connecting phase....." | tee -a $detailedlogfile
+                   if [ $connectingcount -ge 20 ]
+                   then
+                   echo "Client is looping in connecting phase" | tee -a $detailedlogfile
+                   exium_cli_killer
+                   client_restart
+                   fi
+                   sleep 3
+                fi
+                #if [ $connectionflagocn -eq 3 ]
+                if [ "$connectionflagocn" = "disconnecting" ]
+                then 
+                   echo "Still in Disconnecting phase....." | tee -a $detailedlogfile
+                   if [ $disconnectingcount -ge 20 ]
+                   then
+                   echo "Client is looping in Disconnecting phase" | tee -a $detailedlogfile
+                   exium_cli_killer
+                   client_restart
+                   fi
+                   sleep 3
+                fi
+                #if [ $connectionflagocn -eq 4 ]
+                if [ "$connectionflagocn" = "address_already_in_use" ]
+                then 
+                   echo "Fatal error : listen udp4 :9384: bind: address already in use" | tee -a $detailedlogfile
+                   if [ $fatalerrorcount -ge 2 ]
+                   then
+                       exium_cli_killer
+                   fi
+                   sleep 3
+                fi
+                #if [ $connectionflagocn -eq 5 ]
+                if [ "$connectionflagocn" = "connectionstatusocn_empty" ]
+                   then
+                   echo "Fatal error : service not running" | tee -a $detailedlogfile
+                   client_restart
                 fi
 
                 done
@@ -317,9 +335,9 @@ disconnectingcount=0
                 connectionstatusocn=$(exium-cli status | grep Active | cut -d ":" -f 2 | sed 's/ //g')
                 if [ $connectionstatusocn == 'Active' ]
                 then
-                connectionflagocn=1
+                connectionflagocn=active
                 else 
-                connectionflagocn=0
+                connectionflagocn=not_active
                 fi
     fi
 }
@@ -334,55 +352,69 @@ connection_status_check_after_disconnect ()
     connectionstatusocn=$(exium-cli status | grep -e Connecting -e Active -e NotActive -e Disconnecting -e Fatal | cut -d ":" -f 2 | sed 's/ //g')
     if [ $connectionstatusocn == 'Active' ]
     then
-    connectionflagocn=1
+    #connectionflagocn=1
+    connectionflagocn=active
     elif [ $connectionstatusocn == 'Connecting' ]
     then
-    connectionflagocn=2
+    # connectionflagocn=2
+    connectionflagocn=connecting
     elif [ $connectionstatusocn == 'Disconnecting' ]
     then
-    connectionflagocn=3
+    # connectionflagocn=3
+    connectionflagocn=disconnecting
     elif [ $connectionstatusocn == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
     then
-    connectionflagocn=4
+    # connectionflagocn=4
+    connectionflagocn=address_already_in_use
     elif [ -z "$connectionstatusocn" ]
     then
-    connectionflagocn=5
+    # connectionflagocn=5
+    connectionflagocn=connectionstatusocn_empty
     else
     #NotActive flag
-    connectionflagocn=0
+    # connectionflagocn=0
+    connectionflagocn=not_active
     fi
-    if [ $connectionflagocn -eq 1 ] || [ $connectionflagocn -eq 2 ] || [ $connectionflagocn -eq 3 ] || [ $connectionflagocn -eq 4 ] || [ $connectionflagocn -eq 5 ]
+    if [ "$connectionflagocn" = "active" ] || [ "$connectionflagocn" = "connecting" ] || [ "$connectionflagocn" = "disconnecting" ] || [ "$connectionflagocn" = "address_already_in_use" ] || [ "$connectionflagocn" = "connectionstatusocn_empty" ]
         then 
-            while [ $connectionflagocn -eq 1 ] || [ $connectionflagocn -eq 2 ] || [ $connectionflagocn -eq 3 ] || [ $connectionflagocn -eq 4 ] || [ $connectionflagocn -eq 5 ]
+            #while [ $connectionflagocn -eq 1 ] || [ $connectionflagocn -eq 2 ] || [ $connectionflagocn -eq 3 ] || [ $connectionflagocn -eq 4 ] || [ $connectionflagocn -eq 5 ]
+            while [ "$connectionflagocn" = "active" ] || [ "$connectionflagocn" = "connecting" ] || [ "$connectionflagocn" = "disconnecting" ] || [ "$connectionflagocn" = "address_already_in_use" ] || [ "$connectionflagocn" = "connectionstatusocn_empty" ]
                 do
                 sleep 5
                 connectionstatusocn=$(exium-cli status | grep -e Connecting -e Active -e NotActive -e Disconnecting -e Fatal | cut -d ":" -f 2 | sed 's/ //g')
                    
                 if [ $connectionstatusocn == 'Active' ]
                 then
-                connectionflagocn=1
+                # connectionflagocn=1
+                connectionflagocn=active
                 activecount=$((activecount+1))
                 elif [ $connectionstatusocn == 'Connecting' ]
                 then
-                connectionflagocn=2
+                # connectionflagocn=2
+                connectionflagocn=connecting
                 connectingcount=$((connectingcount+1))
                 elif [ $connectionstatusocn == 'Disconnecting' ]
                 then
-                connectionflagocn=3
+                # connectionflagocn=3
+                connectionflagocn=disconnecting
                 disconnectingcount=$((disconnectingcount+1))
                 elif [ $connectionstatusocn == 'Fatal error : listen udp4 :9384: bind: address already in use' ]
                 then
-                connectionflagocn=4
+                # connectionflagocn=4
+                connectionflagocn=address_already_in_use
                 fatalerrorcount=$((fatalerrorcount+1))
                 elif [ -z "$connectionstatusocn" ]
                 then
-                connectionflagocn=5
+                # connectionflagocn=5
+                connectionflagocn=connectionstatusocn_empty
                 else
                 #NotActive flag
-                connectionflagocn=0
+                # connectionflagocn=0
+                connectionflagocn=not_active
                 fi
                 
-                 if [ $connectionflagocn -eq 1 ]
+                 # if [ $connectionflagocn -eq 1 ]
+                 if [ "$connectionflagocn" = "active" ]
                  then
                     echo "Still in Active State....." | tee -a $detailedlogfile
                     if [ $activecount -ge 5 ]
@@ -394,7 +426,8 @@ connection_status_check_after_disconnect ()
                     sleep 3
                  fi
 
-                 if [ $connectionflagocn -eq 2 ]
+                 # if [ $connectionflagocn -eq 2 ]
+                 if [ "$connectionflagocn" = "connecting" ]
                  then
                     echo "Still in connecting phase....." | tee -a $detailedlogfile
                     if [ $connectingcount -ge 20 ]
@@ -406,7 +439,8 @@ connection_status_check_after_disconnect ()
                     sleep 3
                  fi
                  
-                 if [ $connectionflagocn -eq 3 ]
+                 # if [ $connectionflagocn -eq 3 ]
+                 if [ "$connectionflagocn" = "disconnecting" ]
                  then
                     echo "Still in Disconnecting phase....." | tee -a $detailedlogfile
                     if [ $disconnectingcount -ge 20 ]
@@ -418,7 +452,8 @@ connection_status_check_after_disconnect ()
                     sleep 3
                  fi
 
-                 if [ $connectionflagocn -eq 4 ]
+                 # if [ $connectionflagocn -eq 4 ]
+                 if [ "$connectionflagocn" = "address_already_in_use" ]
                     then 
                     echo "Fatal error : listen udp4 :9384: bind: address already in use" | tee -a $detailedlogfile
                     if [ $fatalerrorcount -ge 2 ]
@@ -428,7 +463,8 @@ connection_status_check_after_disconnect ()
                     fi
                     sleep 3
                  fi
-                 if [ $connectionflagocn -eq 5 ]
+                 # if [ $connectionflagocn -eq 5 ]
+                 if [ "$connectionflagocn" = "connectionstatusocn_empty" ]
                     then
                     echo "Fatal error : service not running" | tee -a $detailedlogfile
                     client_restart
@@ -540,7 +576,8 @@ while read line; do
     exium-cli connect -s $line
     sleep 5
     connection_status_check
-    if [ $connectionflagocn -eq 1 ];
+    # if [ $connectionflagocn -eq 1 ];
+    if [ "$connectionflagocn" = "active" ];
         then
         echo "+Successfully connected to $line [$currentservername] ..."
         echo "--------------- Successfully Connected - $line [$currentservername] ---------------" >> $detailedlogfile
@@ -564,7 +601,8 @@ while read line; do
         sleep 5
         connection_status_check
         
-        if [ $connectionflagocn -eq 1 ];
+        # if [ $connectionflagocn -eq 1 ];
+        if [ "$connectionflagocn" = "active" ];
             then
             echo
             echo "+Successfully Connected - $line [$currentservername] ---[Second Time]---"
