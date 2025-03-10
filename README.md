@@ -1,7 +1,7 @@
 # [DEPRECATED] OCN-Status-Automation
 NB: No longer maintained
 
-This repository provides an automation solution developed for network testing and monitoring of Exium’s xEdges using Linux-based CLI tools. The scripts automate connecting to each OCN (On-premises Cloud Network), running connectivity checks, and sending detailed results to a designated Slack channel.
+This repository provides an automation solution developed for network testing and monitoring of Exium’s xEdges using Linux-based CLI tools. The scripts automate connecting to each OCN (On-premises Cyber Node), running connectivity checks, and sending detailed results to a designated Slack channel.
 
 Key Features
 Connectivity Testing: Automatically connects to each xEdge to verify connectivity.
